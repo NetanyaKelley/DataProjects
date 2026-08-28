@@ -175,43 +175,27 @@ def extract_job_title(subject, body):
         if len(parts) > 1:
             return parts[1].strip()
 
-    # ============================================================
-    # NEW SUBJECT PATTERNS FROM UNKNOWN JOB TITLES
-    # ============================================================
 
-    # AbbVie
-    # Example:
-    # Associate Data Engineer I - R00146170 Update from AbbVie
     if "update from abbvie" in subject_lower and " - " in subject:
         job_title = subject.split(" - ")[0]
         return job_title.strip(" ​")
 
-    # Application Update - Job Title
-    # Example:
-    # Application Update - Jr. Data Analyst – Software Asset Management
+ 
     if subject_lower.startswith("application update - "):
         job_title = subject[len("Application Update - "):]
         return job_title.strip()
 
-    # Rhythm Energy
-    # Example:
-    # Rhythm Energy – Operations Analyst
+   
     if subject_lower.startswith("rhythm energy") and "–" in subject:
         job_title = subject.split("–", 1)[1]
         return job_title.strip()
 
-    # SCA
-    # Example:
-    # SCA Application Update: Payer Analyst, #2026-46904
     if subject_lower.startswith("sca application update:"):
         job_title = subject.split(":", 1)[1]
         job_title = job_title.split(",")[0]
         return job_title.strip()
 
-    # FIS
-    # Example:
-    # FIS Application Update - Netanya Kelley - JR0305338
-    # Database Administrator I (C5318883)
+ 
     if subject_lower.startswith("fis application update") and " - " in subject:
         job_title = subject.rsplit(" - ", 1)[1]
 
@@ -225,27 +209,19 @@ def extract_job_title(subject, body):
 
         return job_title.strip()
 
-    # RRD
-    # Example:
-    # RRD: Thank you for your interest - Operations Associate...
+
     if subject_lower.startswith(
         "rrd: thank you for your interest -"
     ):
         job_title = subject.split(" - ", 1)[1]
         return job_title.strip(" ​")
 
-    # Job Title position at Company
-    # Example:
-    # Analyst-Field Services Supply Analysis position at TDS Telecom
     if " position at " in subject_lower:
         position = subject_lower.find(" position at ")
         job_title = subject[:position]
         return job_title.strip()
 
-    # DoubleVerify
-    # Example:
-    # Thank you for your interest in DoubleVerify
-    # and the Programmatic Optimization Analyst role
+
     if " and the " in subject_lower and " role" in subject_lower:
         job_start = (
             subject_lower.find(" and the ")
@@ -260,10 +236,7 @@ def extract_job_title(subject, body):
         if job_end != -1:
             return subject[job_start:job_end].strip()
 
-    # Allyn International
-    # Example:
-    # Thank you for applying to Logistics Specialist
-    # at Allyn International
+  
     if (
         subject_lower.startswith("thank you for applying to ")
         and " at " in subject_lower
@@ -278,19 +251,14 @@ def extract_job_title(subject, body):
         if job_end != -1:
             return subject[job_start:job_end].strip()
 
-    # The Nuclear Company
-    # Example:
-    # Your application to The Nuclear Company - IT Support Specialist
+   
     if (
         subject_lower.startswith("your application to ")
         and " - " in subject
     ):
         return subject.rsplit(" - ", 1)[1].strip()
 
-    # KPMG
-    # Example:
-    # KPMG LLP Follow-Up for the Associate, Pricing Tech
-    # Enablement position, Job#129666
+   
     if (
         "follow-up for the " in subject_lower
         and " position" in subject_lower
@@ -308,7 +276,7 @@ def extract_job_title(subject, body):
         if job_end != -1:
             return subject[job_start:job_end].strip()
 
-    # North American Lighting
+
     if (
         "north american lighting" in subject_lower
         and " - " in subject
@@ -533,12 +501,20 @@ confirmed_rejections["job_title"] = confirmed_rejections.apply(
         row["clean_body"]
     ),
     axis=1
+
+)
+known_job_titles = len(job_graph_data)
+total_rejections = len(confirmed_rejections)
+
+extraction_rate = (
+    known_job_titles / total_rejections * 100
+    if total_rejections > 0 else 0
 )
 st.title("Unfortunately, Blah 📩")
 st.caption(
     "An interactive analysis of job rejection patterns, companies, roles, and timing."
 )
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     with st.container(border=True):
@@ -567,6 +543,12 @@ with col3:
             .sum()
         )
     )
+with col4:
+    with st.container(border=True):
+        st.metric(
+            "Job Title Extraction Rate",
+            f"{extraction_rate:.1f}%"
+        )
 confirmed_rejections["parsed_date"] = pd.to_datetime(
     confirmed_rejections["date"]
     .astype(str)
