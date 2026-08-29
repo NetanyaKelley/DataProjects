@@ -503,13 +503,22 @@ confirmed_rejections["job_title"] = confirmed_rejections.apply(
     axis=1
 
 )
-known_job_titles = len(job_graph_data)
+known_job_titles = (
+    confirmed_rejections["job_title"]
+    .astype(str)
+    .str.strip()
+    .str.lower()
+    .ne("unknown")
+    .sum()
+)
+
 total_rejections = len(confirmed_rejections)
 
 extraction_rate = (
     known_job_titles / total_rejections * 100
     if total_rejections > 0 else 0
 )
+
 st.title("Unfortunately, Blah 📩")
 st.caption(
     "An interactive analysis of job rejection patterns, companies, roles, and timing."
@@ -654,7 +663,7 @@ job_counts = (
     .head(10)
 )
 
-
+#python -m streamlit run Raw.py
 left, right = st.columns(2)
 
 with left:
