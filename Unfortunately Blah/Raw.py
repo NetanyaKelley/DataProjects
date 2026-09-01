@@ -18,7 +18,9 @@ confirmed_rejection_phrases = [
     "pursue other candidates",
     "not selected",
     "decided not to proceed",
-    "will not be moving forward"
+    "will not be moving forward",
+    "selected another candidate", 
+    "narrowed to other candidates"
 ]
 generic_sender_labels = [
     "hiring team",
@@ -49,8 +51,10 @@ def clean_body(body):
     return clean_text
 
 def is_rejection(text):
+    text = str(text).lower()
+
     for phrase in confirmed_rejection_phrases:
-        if phrase in text:
+        if phrase.lower() in text:
             return True
 
     return False
@@ -379,20 +383,11 @@ def clean_job_title(job_title):
         job_title = job_title.split("with")[0]
 
     
-    return job_title
+    return  job_title
 
 creds = authenticate_gmail()
 service = build("gmail", "v1", credentials=creds)
-rejection_phrases = [
-    "not moving forward",
-    "move forward with other candidates",
-    "pursue other candidates",
-    "not selected",
-    "another candidate",
-    "other candidates",
-    "decided not to proceed",
-    "will not be moving forward"
-]
+rejection_phrases=confirmed_rejection_phrases
 unknown_company_fixes = {
     "Togetherwork Application for Data Migration Specialist Position": "Togetherwork",
     "Your Application with Bridgeway Benefit Technologies": "Bridgeway Benefit Technologies",
@@ -427,6 +422,26 @@ pageToken=next_page_token
     Rejectresults += next_results["messages"]
     next_page_token = next_results.get("nextPageToken")
 #print(len(Rejectresults))
+def extract_email_body(payload):
+    body_sections = []
+
+    def read_part(part):
+        mime_type = part.get("mimeType", "")
+        body_data = part.get("body", {}).get("data")
+
+        if body_data and mime_type in ["text/plain", "text/html"]:
+            decoded = base64.urlsafe_b64decode(
+                body_data + "==="
+            ).decode("utf-8", errors="replace")
+
+            body_sections.append(decoded)
+
+        for nested_part in part.get("parts", []):
+            read_part(nested_part)
+
+    read_part(payload)
+
+    return "\n".join(body_sections)
 email_records = []
 for message in Rejectresults:
         subject = ""
@@ -451,22 +466,28 @@ for message in Rejectresults:
             elif header["name"]=="Date":
                 Sendate=header['value']
                 #print(Sendate)
-        if "parts" in email_info:     
-            email_parts = email_info["parts"]  
-            for part in email_parts:
-                #print(part["mimeType"])
-                if part["mimeType"]=="text/plain":
-                    bodypart = part["body"]
-                    encoded_body = bodypart["data"]
-                    decoded_body = base64.urlsafe_b64decode(encoded_body).decode("utf-8")
-                    #print(decoded_body)
-        else:
-            bodypart = email_info["body"]
-            encoded_body = bodypart["data"]
-            decoded_body = base64.urlsafe_b64decode(encoded_body).decode("utf-8")
-            #print(decoded_body)
-        email_record={ "date": Sendate,
-        "sender": sender,"subject": subject,"body": decoded_body}          
+        # if "parts" in email_info:     
+        #     email_parts = email_info["parts"]  
+        #     for part in email_parts:
+        #         #print(part["mimeType"])
+        #         if part["mimeType"]=="text/plain":
+        #             bodypart = part["body"]
+        #             encoded_body = bodypart["data"]
+        #             decoded_body = base64.urlsafe_b64decode(encoded_body).decode("utf-8")
+        #             #print(decoded_body)
+        # else:
+        #     bodypart = email_info["body"]
+        #     encoded_body = bodypart["data"]
+        #     decoded_body = base64.urlsafe_b64decode(encoded_body).decode("utf-8")
+        #     #print(decoded_body)
+        decoded_body = extract_email_body(email_info)
+        email_record = {
+        "message_id": Result_message,
+        "date": Sendate,
+        "sender": sender,
+        "subject": subject,
+        "body": decoded_body
+    }  
         email_records.append(email_record)
 RejectionDataframe=pd.DataFrame(email_records)
 RejectionDataframe.to_csv("BlahRejection.csv", index=False)
@@ -561,7 +582,7 @@ with col4:
 confirmed_rejections["parsed_date"] = pd.to_datetime(
     confirmed_rejections["date"]
     .astype(str)
-    .str.replace(r"\s*\(UTC\)\s*$", "", regex=True),
+    .str.replace(r"\s*\([^)]*\)\s*$", "", regex=True),
     format="mixed",
     errors="coerce",
     utc=True
@@ -608,14 +629,20 @@ job_graph_data = confirmed_rejections[
 
 
 
-company_graph_data = confirmed_rejections[
+company_names = (
     confirmed_rejections["clean_company"]
+    .fillna("")
     .astype(str)
     .str.strip()
-    .str.lower()
-    .ne("unknown")
-].copy()
+)
 
+company_graph_data = confirmed_rejections[
+    company_names.ne("")
+    & company_names.str.lower().ne("unknown")
+    & company_names.str.lower().ne("linkedin")
+    & company_names.str.lower().ne("workday")
+     & company_names.str.lower().ne("adp")
+].copy()
 company_counts = (
     company_graph_data["clean_company"]
     .value_counts()
@@ -698,3 +725,8 @@ with right:
             weekday_counts,
         height=280
     )
+        print(
+    confirmed_rejections[
+        ["subject", "date", "parsed_date"]
+    ].head(10).to_string()
+) 
