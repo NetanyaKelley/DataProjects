@@ -1,0 +1,95 @@
+# Crop Health Analysis: Comparing Environmental Factors Across Crop Types
+
+## Introduction
+
+The purpose of this analysis was to determine whether environmental and agricultural factors associated with crop health behave consistently across different crop types or whether the relationships are crop-specific. The analysis focused on three crop types: Maize, Wheat, and Rice.
+
+The primary factors examined were rainfall, soil moisture, and pest damage. Each crop was first analyzed independently before the results were compared across crop types. This approach was important because the crops had substantially different sample sizes, and combining all observations immediately could allow the largest crop group to dominate the overall results.
+
+The primary research question was:
+
+**Do rainfall, soil moisture, and pest damage have meaningful relationships with crop health, and do these relationships differ between Maize, Wheat, and Rice?**
+
+The alternative hypothesis was that rainfall, soil moisture, and pest damage would be associated with crop health and that these relationships could differ across crop types. The null hypothesis was that these factors would not demonstrate meaningful associations with crop health within or across the three crop types.
+
+## Data Preparation and Exploratory Analysis
+
+The dataset contained 212,019 observations across Maize, Wheat, and Rice. Each crop was separated for individual analysis before cross-crop comparisons were performed.
+
+Exploratory data analysis included checking for duplicate records, missing values, data types, minimum and maximum values, and numerical distributions. The distributions of rainfall, soil moisture, and pest damage were also examined for healthy and unhealthy observations.
+
+The three crops had substantially different sample sizes. Because of this imbalance, raw healthy and unhealthy counts were not used to directly compare crop health. Instead, the number of healthy and unhealthy observations was converted to a percentage within each crop.
+
+The resulting health distributions were:
+
+* **Maize:** 70.00% healthy and 30.00% unhealthy
+* **Wheat:** 69.92% healthy and 30.08% unhealthy
+* **Rice:** 69.46% healthy and 30.54% unhealthy
+
+Despite differences in sample size, all three crops demonstrated an approximately 70/30 healthy-to-unhealthy distribution. The difference between the highest and lowest healthy percentages was less than one percentage point.
+
+## Healthy vs. Unhealthy Crop Conditions
+
+Rainfall, soil moisture, and pest damage were compared between healthy and unhealthy observations within each crop.
+
+The descriptive analysis showed only very small differences between the healthy and unhealthy groups. No large separation was apparent for any of the three environmental factors.
+
+For example, Wheat healthy observations had an average rainfall of approximately 20.01 compared with 19.84 among unhealthy observations. Average soil moisture was approximately 20.04 among healthy Wheat observations and 19.98 among unhealthy observations. Pest damage was also very similar, at approximately 49.47 for healthy observations and 49.59 for unhealthy observations.
+
+Rice demonstrated a similar pattern. Average rainfall was approximately 20.14 for healthy observations and 20.00 for unhealthy observations. Average soil moisture was approximately 20.01 and 19.99, respectively, while average pest damage was approximately 49.31 for both groups.
+
+These descriptive results suggested that the selected factors might provide limited separation between healthy and unhealthy crop observations.
+
+## Statistical Testing
+
+Welch's independent t-tests were conducted to determine whether rainfall, soil moisture, and pest damage differed significantly between healthy and unhealthy observations for each crop.
+
+Nine statistical tests were performed in total: three environmental factors across three crop types.
+
+At a significance level of α = 0.05, **none of the nine tests produced a statistically significant result**.
+
+For rainfall, the p-values were approximately 0.442 for Maize, 0.171 for Wheat, and 0.627 for Rice. For soil moisture, the p-values were approximately 0.443, 0.212, and 0.833, respectively. Pest damage produced p-values of approximately 0.603 for Maize, 0.492 for Wheat, and 0.986 for Rice.
+
+Because all p-values exceeded 0.05, the analysis failed to reject the null hypothesis for each comparison. There was insufficient statistical evidence that the mean rainfall, soil moisture, or pest damage differed between healthy and unhealthy observations within any of the three crop types.
+
+## Logistic Regression
+
+Logistic regression models were developed separately for Maize, Wheat, and Rice to determine whether rainfall, soil moisture, and pest damage could collectively predict crop health.
+
+The models initially appeared to achieve approximately 70% accuracy:
+
+* **Maize:** 69.99%
+* **Wheat:** 69.92%
+* **Rice:** 69.46%
+
+However, these accuracy values were nearly identical to the percentage of healthy observations in each crop. Because approximately 70% of each crop was classified as healthy, accuracy alone could provide a misleading interpretation of model performance.
+
+Confusion matrices were therefore examined.
+
+The Maize model classified all 13,394 healthy test observations as healthy but incorrectly classified all 5,742 unhealthy observations as healthy. The Wheat model similarly classified all 26,639 healthy observations as healthy while incorrectly classifying all 11,459 unhealthy observations as healthy. The Rice model classified all 4,427 healthy observations as healthy while incorrectly classifying all 1,946 unhealthy observations as healthy.
+
+Therefore, all three logistic regression models effectively learned to predict the majority class rather than distinguish between healthy and unhealthy crops. None of the models correctly identified an unhealthy observation in the test sets.
+
+The regression coefficients for rainfall, soil moisture, and pest damage were also extremely small, providing additional evidence that these variables offered little predictive separation under the models used.
+
+## Cross-Crop Comparison
+
+The results were remarkably consistent across Maize, Wheat, and Rice.
+
+First, all three crops had nearly identical healthy and unhealthy distributions. Second, the descriptive differences in rainfall, soil moisture, and pest damage between healthy and unhealthy observations were small. Third, none of the nine statistical comparisons reached statistical significance. Finally, the logistic regression models failed to distinguish unhealthy observations from healthy observations across all three crop types.
+
+This consistency is important because the crop sample sizes were substantially different. Despite those differences, the overall analytical conclusions remained similar across the three crops.
+
+## Conclusion
+
+The original hypothesis that rainfall, soil moisture, and pest damage would demonstrate meaningful relationships with crop health, potentially with different relationships across crop types, was **not supported by the results of this analysis**.
+
+The analysis failed to reject the null hypothesis. Within this dataset, there was insufficient evidence that rainfall, soil moisture, or pest damage differed significantly between healthy and unhealthy observations for Maize, Wheat, or Rice.
+
+Furthermore, when the three variables were combined in logistic regression models, they did not provide sufficient predictive information to distinguish healthy from unhealthy observations. Although model accuracy approached 70%, examination of the confusion matrices revealed that this performance resulted from predicting the majority healthy class rather than successfully identifying both health outcomes.
+
+Based on the variables and methods examined in this analysis, there is also little evidence that the relationship between these factors and crop health differs substantially among Maize, Wheat, and Rice.
+
+These findings do not establish that rainfall, soil moisture, and pest damage have no biological or agricultural effect on crop health. Instead, they demonstrate that **this dataset and the variables examined did not provide sufficient evidence of such relationships**. Other variables, interactions between environmental factors, temporal effects, different measurements, or alternative modeling approaches may provide additional information about crop health.
+
+Overall, the project demonstrates the importance of testing assumptions rather than relying on expected relationships. It also illustrates why classification accuracy should not be interpreted independently of class distribution and confusion-matrix results. In this case, investigating beyond the initial 70% accuracy revealed that the models had little ability to identify unhealthy crop observations.
