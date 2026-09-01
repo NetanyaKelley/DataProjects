@@ -1,3 +1,5 @@
+from io import BytesIO
+from streamlit_autorefresh import st_autorefresh
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -11,6 +13,10 @@ st.set_page_config(
     page_title="Unfortunately, Blah",
     page_icon="📊",
     layout="wide"
+)
+st_autorefresh(
+    interval=5 * 60 * 1000,
+    key="gmail_auto_refresh"
 )
 confirmed_rejection_phrases = [
     "not moving forward",
@@ -490,7 +496,6 @@ for message in Rejectresults:
     }  
         email_records.append(email_record)
 RejectionDataframe=pd.DataFrame(email_records)
-RejectionDataframe.to_csv("BlahRejection.csv", index=False)
 RejectionDataframe["clean_body"] = RejectionDataframe["body"].apply(clean_body)
 RejectionDataframe["is_rejection"] = RejectionDataframe["clean_body"].apply(is_rejection)
 #print(RejectionDataframe.head())
@@ -730,3 +735,28 @@ with right:
         ["subject", "date", "parsed_date"]
     ].head(10).to_string()
 ) 
+excel_data = confirmed_rejections.copy()
+
+excel_data["parsed_date"] = (
+    excel_data["parsed_date"]
+    .dt.tz_convert("America/New_York")
+    .dt.tz_localize(None)
+)
+
+excel_file = BytesIO()
+
+with pd.ExcelWriter(excel_file, engine="openpyxl") as writer:
+    excel_data.to_excel(
+        writer,
+        sheet_name="Confirmed Rejections",
+        index=False
+    )
+
+excel_file.seek(0)
+
+st.download_button(
+    label="Download Confirmed Rejections",
+    data=excel_file,
+    file_name="Confirmed_Rejections.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
